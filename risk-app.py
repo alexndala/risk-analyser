@@ -103,8 +103,15 @@ with st.sidebar:
             message(msg["content"])
 
 # Main content area
-st.title("Portfolio Risk Cluster Analysis")
-st.markdown("""Explore optimal asset grouping using elbow curve methodology.""")
+st.markdown("""
+    <h1 style='text-align: center;'>Portfolio Risk Cluster Analysis</h1>
+    <p style='text-align: center;'>Created by Mahlatse Ndala</p>
+    """, unsafe_allow_html=True)
+
+st.markdown("""
+    <br>
+    <p style='text-align: center;'>Explore optimal asset grouping using elbow curve methodology.</p>
+    """, unsafe_allow_html=True)
 
 if uploaded_file:
     assets_df = pd.read_csv(uploaded_file)
