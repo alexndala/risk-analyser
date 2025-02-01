@@ -4,8 +4,28 @@ import numpy as np
 import yfinance as yf
 import plotly.express as px
 from sklearn.cluster import KMeans
+from streamlit_chat import message
+import re
 
 st.set_page_config(page_title="Risk Cluster Analyzer", layout="wide")
+
+FINANCIAL_TERMS = {
+    "sharpe ratio": "The Sharpe ratio measures the risk-adjusted return of an investment. Higher is better.",
+    "efficient frontier": "A set of optimal portfolios that offer the highest expected return for a defined level of risk.",
+    "correlation matrix": "Shows how different assets move in relation to each other. Range from -1 to +1.",
+    "max drawdown": "The maximum observed loss from a peak to a trough of a portfolio.",
+    "elbow curve": "Method to determine optimal number of clusters by looking at the rate of improvement.",
+    "kmeans clustering": "Algorithm that groups similar assets together based on return patterns.",
+    "portfolio volatility": "Measures how much portfolio returns fluctuate over time.",
+    "risk contribution": "How much each asset or cluster contributes to total portfolio risk."
+}
+
+def get_bot_response(user_query):
+    query = user_query.lower()
+    for term, explanation in FINANCIAL_TERMS.items():
+        if term in query:
+            return explanation
+    return "I'm not sure about that. Try asking about specific terms like 'Sharpe ratio' or 'efficient frontier'."
 
 @st.cache_data
 def fetch_stock_data(assets, start_date, end_date):
@@ -57,6 +77,29 @@ with st.sidebar:
 if end_date <= start_date:
     st.error("End date must be after start date")
     st.stop()
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Sidebar chat interface
+with st.sidebar:
+    st.subheader("Portfolio Analysis Assistant")
+    user_query = st.text_input("Ask about any financial term:")
+    
+    if user_query:
+        response = get_bot_response(user_query)
+        st.session_state.messages.append({"role": "user", "content": user_query})
+        st.session_state.messages.append({"role": "assistant", "content": response})
+    
+    if st.button("Clear Chat"):
+        st.session_state.messages = []
+    
+    # Display chat history
+    for msg in st.session_state.messages:
+        if msg["role"] == "user":
+            message(msg["content"], is_user=True)
+        else:
+            message(msg["content"])
 
 # Main content area
 st.title("Portfolio Risk Cluster Analysis")
@@ -189,7 +232,7 @@ if uploaded_file:
                 fig_corr = px.imshow(corr_matrix,
                                      labels=dict(color="Correlation"),
                                      title="Asset Correlation Heatmap",
-                                     width=800,
+                                     width=600,
                                      height=1000)
                 fig_corr.update_layout(
                     margin=dict(l=50, r=50, t=50, b=50)
