@@ -6,6 +6,7 @@ import plotly.express as px
 from sklearn.cluster import KMeans
 from streamlit_chat import message
 import re
+import statsmodels.api as sm  # Add this import at the top
 
 st.set_page_config(page_title="Risk Cluster Analyzer", layout="wide")
 
