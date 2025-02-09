@@ -1,0 +1,9 @@
+I created an open-source free portfolio risk cluster analysis tool for anyone. 
+
+Below is a snippet of how it visualises the risk contribution per cluster. 
+
+Try it here: https://lnkd.in/egxbJphX
+
+Suitable for all listed assets that trade on public markets. For all JSE listed companies, the suffix of the tickers must be '.JO', e.g. "PRX.JO", "MTN.JO", "OMU.JO", etc.
+
+Feedback is welcome in the comments, and if you enjoy building things, please contribute to this project - the source code is on the top right.
