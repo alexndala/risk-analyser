@@ -61,26 +61,6 @@ def find_optimal_k(wcss):
     elbow_idx = np.argmin(np.abs(diff_r - 1)) + 2
     return elbow_idx
 
-# Add this function to simulate portfolio returns and risks
-def simulate_portfolio(returns, optimal_k):
-    kmeans = KMeans(n_clusters=optimal_k, n_init=10)
-    labels = kmeans.fit_predict(returns.T)
-    
-    cluster_risks = []
-    cluster_returns = []
-    for i in range(optimal_k):
-        cluster_assets = returns.columns[labels == i]
-        cluster_data = returns[cluster_assets]
-        
-        # Calculate mean return and risk (std deviation) for the cluster
-        cluster_mean_return = cluster_data.mean().mean() * 252
-        cluster_risk = cluster_data.std().mean() * np.sqrt(252)
-        
-        cluster_risks.append(cluster_risk)
-        cluster_returns.append(cluster_mean_return)
-    
-    return cluster_risks, cluster_returns
-
 # Sidebar controls
 with st.sidebar:
     st.header("Data Configuration")
@@ -203,36 +183,6 @@ if uploaded_file:
             optimal_k = find_optimal_k(wcss)
             st.write(f"### Optimal Number of Clusters: {optimal_k}")
             st.write("Based on the elbow curve methodology, this is where the rate of improvement significantly slows down.")
-
-            # Simulate portfolio returns and risks with optimal clusters
-            cluster_risks, cluster_returns = simulate_portfolio(returns, optimal_k)
-
-            # Display simulated portfolio results
-            st.subheader("Simulated Portfolio Returns and Risks")
-            simulated_data = pd.DataFrame({
-                'Cluster': [f'Cluster {i+1}' for i in range(optimal_k)],
-                'Expected Return (%)': [ret * 100 for ret in cluster_returns],
-                'Risk (Std Dev) (%)': [risk * 100 for risk in cluster_risks]
-            })
-
-            fig_simulated = px.bar(simulated_data, 
-                                   x='Cluster', 
-                                   y='Risk (Std Dev) (%)', 
-                                   color='Expected Return (%)',
-                                   title='Simulated Portfolio Returns and Risks',
-                                   text='Expected Return (%)')
-            st.plotly_chart(fig_simulated, use_container_width=True)
-
-            # Select less risky assets until optimal clusters are reached
-            selected_assets = []
-            for i in range(optimal_k):
-                cluster_assets = returns.columns[labels == i]
-                cluster_data = returns[cluster_assets]
-                sorted_assets = cluster_data.std().sort_values().index.tolist()
-                selected_assets.extend(sorted_assets[:len(sorted_assets)//optimal_k])
-
-            st.write("### Selected Less Risky Assets")
-            st.write(", ".join(selected_assets))
 
             if 'plot_data' in locals():
                 csv = plot_data.to_csv(index=False)
