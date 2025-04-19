@@ -30,7 +30,16 @@ def get_bot_response(user_query):
 
 @st.cache_data
 def fetch_stock_data(assets, start_date, end_date):
-    return yf.download(assets, start=start_date, end=end_date)
+    #error handling 
+    try:
+        data = yf.download(assets, start=start_date, end= end_date)
+        if data.empty:
+            st.error("No data downlaoded. Check assets and date range.")
+            return None
+    except Exception as e:
+        st.error(f"Error downloading data: {str(e)}")
+        return None   
+    # return yf.download(assets, start=start_date, end=end_date)
 
 def calculate_efficient_frontier(returns, num_portfolios=1000):
     num_assets = len(returns.columns)
@@ -114,24 +123,52 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 if uploaded_file:
-    assets_df = pd.read_csv(uploaded_file)
-    assets = list(assets_df['Assets'].unique())
+    # error handling
+    try:
+        assets_df = pd.read_csv(uploaded_file)
+        if 'Assets' not in assets_df.columns:
+            st.error("CSV must contain an 'Assets' column with tickers")
+            st.stop()
+
+        # assets_df = pd.read_csv(uploaded_file)
+        assets = list(assets_df['Assets'].unique())
+        if not assets:
+            st.error('No assets found in uploaded file')
+            st.stop()
+        
     
-    with st.spinner('Downloading market data...'):
-        try:
+    
+        with st.spinner('Downloading market data...'):
+           
             # Downloading data from Yahoo Finance
             data = fetch_stock_data(assets, start_date, end_date)
+            if data is None:
+                st.stop()
             
             # Handle single-level and multi-level column indexes
             if isinstance(data.columns, pd.MultiIndex):
-                adj_close_data = data['Close']
+                adj_close_data = data['Close'].copy()
             else:
-                adj_close_data = data[['Close']]  # Single-level index
+                adj_close_data = data[['Close']].copy()  # Single-level index
             
+             # Check if we have any closing price data
+            if adj_close_data.empty:
+                st.error("No closing price data available for selected assets/date range")
+                st.stop()
+
+            # Forward-fill missing values and drop remaining NAs
+            adj_close_data.ffill(inplace=True)
+            adj_close_data.dropna(inplace=True)
+            
+            # Check if we have sufficient data after cleaning
+            if len(adj_close_data) < 5:  # Need at least 5 days for meaningful analysis
+                st.error("Insufficient data after cleaning. Try a wider date range.")
+                st.stop()
+
             # Calculate returns
             returns = adj_close_data.pct_change().dropna()
 
-            if returns.empty or returns.isnull().all().all():
+            if returns.empty:
                 st.error("No valid data found for the selected date range")
                 st.stop()
             
@@ -310,7 +347,7 @@ if uploaded_file:
 
                 st.plotly_chart(ef_fig, use_container_width=True)
 
-        except Exception as e:
-            st.error(f"Error processing data: {str(e)}")
-else:
-    st.info("Please upload a CSV file containing asset tickers to begin analysis.")
+    except KeyError:
+            st.error("Invalid CSV format. Must contain 'Assets' column.")
+    except  Exception as e:
+        st.error(f"Error processing data: {str(e)}")
