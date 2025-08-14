@@ -120,4 +120,4 @@ Contributions are welcome! Please feel free to submit pull requests or open issu
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
-**Created by Mahlatse Ndala** | Portfolio Risk Analysis Specialist
+**Created by Mahlatse Ndala** | Quant Analyst
