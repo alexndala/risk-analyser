@@ -4,7 +4,7 @@ Portfolio Risk Cluster Analysis Application
 A Streamlit web application for analyzing portfolio risk using clustering techniques
 and visualizing asset relationships.
 
-Author: Mahlatse Ndala
+Creator: Mahlatse Ndala
 """
 
 import streamlit as st
