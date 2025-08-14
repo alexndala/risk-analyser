@@ -131,13 +131,40 @@ def fetch_stock_data(assets: List[str], start_date: datetime, end_date: datetime
         
         # Download data with progress indicator
         with st.spinner(f'Downloading data for {len(cleaned_assets)} assets...'):
-            data = yf.download(
-                cleaned_assets, 
-                start=start_date, 
-                end=end_date,
-                progress=False,
-                show_errors=False
-            )
+            try:
+                data = yf.download(
+                    cleaned_assets, 
+                    start=start_date, 
+                    end=end_date,
+                    progress=False
+                )
+            except TypeError as te:
+                # Handle yfinance API changes or version incompatibilities
+                st.warning("⚠️ Trying alternative download method...")
+                try:
+                    # Fallback method without progress parameter
+                    data = yf.download(cleaned_assets, start=start_date, end=end_date)
+                except Exception:
+                    # Last resort - download assets one by one
+                    st.info("📥 Downloading assets individually...")
+                    data_list = []
+                    for asset in cleaned_assets:
+                        try:
+                            asset_data = yf.download(asset, start=start_date, end=end_date)
+                            if not asset_data.empty:
+                                data_list.append(asset_data)
+                        except Exception:
+                            st.warning(f"⚠️ Could not download data for {asset}")
+                            continue
+                    
+                    if data_list:
+                        # Combine individual downloads
+                        data = pd.concat([d['Close'] if 'Close' in d.columns else d for d in data_list], axis=1)
+                        data.columns = cleaned_assets[:len(data_list)]
+                    else:
+                        data = pd.DataFrame()
+            except Exception as e:
+                raise e
         
         if data.empty:
             st.error("No data downloaded. Please check asset symbols and date range.")
